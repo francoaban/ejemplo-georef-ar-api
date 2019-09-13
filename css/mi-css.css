@@ -1,0 +1,21 @@
+#content {
+    padding: 35px;
+    margin: 20px;
+    background-color: antiquewhite;
+}
+
+table,
+th,
+td {
+    border: 1px solid black;
+    border-collapse: collapse;
+    padding: 10px;
+}
+
+#divLocalidades,
+#divListaMunicipio {
+    border: 3px solid black;
+    padding: 35px;
+    background-repeat: no-repeat;
+    background-origin: content-box;
+}

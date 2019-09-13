@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>Mi Ubicaci&oacute;n</title>
+        <link rel="stylesheet" href="css/mi-css.css"></link>
+    </head>
+    <body id="content" onload="ocultarTablas()">
+        <div id="divLocalicacion">
+            <h1>Mi ubicaci&oacute;n Georeferenciada</h1>
+            <input type="button" name="" id="" onclick="ubicacion()" value="Mi Ubicaci&oacute;n">
+            <br>
+            <table id="geolocalizacion">
+                <thead>
+                    <tr>
+                        <th>Latitud</th>
+                        <th>Longitud</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><label name="latitud" id="latitud"></label></td>
+                        <td><label name="longitud" id="longitud"></label></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <br>
+        <div id="divMunicipio">
+            <h1>El Municipio en el que me encuentro</h1>
+            <input type="button" name="" id="" onclick="municipio()" value="Mi Ubicaci&oacute;n">
+            <br>
+            <table id="municipio">
+                <thead>
+                    <tr>
+                        <th>Provincia</th>
+                        <th>Departamento</th>
+                        <th>Municipio</th>
+                    </tr>
+                </thead> 
+                <tbody id="miMunicipio">
+                </tbody>
+            </table>
+        </div>
+        <br>
+        <div id="divLocalidades">
+            <h1>Listar Localidades</h1>
+            <label>Provincia</label>
+            <select name="selectProvincias" id="selectProvincias" onchange="listaDelocalidades()">
+                <option>Cargando Listado de Provincias</option>
+            </select>
+            <br>
+            <div id="localidades">
+            </div>
+        </div>
+        <br>
+        <div id="divListaMunicipio">
+            <h1>Listar Municipios</h1>
+            <label>Provincia</label>
+            <select name="selectProvincias1" id="selectProvincias1" onchange="listaDeMunicipios()">
+                <option>Cargando Listado de Provincias</option>
+            </select>
+            <br>
+            <div id="municipios">
+            </div>
+        </div>
+        <script src="js/mi-script.js"></script>
+    </body>
+</html>
