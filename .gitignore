@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Build output
+dist/
+build/
+out/
+coverage/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+coverage/
+*.lcov
+
+# Temporary files
+.tmp/
+tmp/
+*.tmp
+*.swp
+
+# Keep package manager lockfiles if you want them versioned
+# package-lock.json
+# pnpm-lock.yaml

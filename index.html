@@ -1,69 +1,100 @@
 <!DOCTYPE html>
 <html lang="es">
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-        <title>Mi Ubicaci&oacute;n</title>
-        <link rel="stylesheet" href="css/mi-css.css"></link>
-    </head>
-    <body id="content" onload="ocultarTablas()">
-        <div id="divLocalicacion">
-            <h1>Mi ubicaci&oacute;n Georeferenciada</h1>
-            <input type="button" name="" id="" onclick="ubicacion()" value="Mi Ubicaci&oacute;n">
-            <br>
-            <table id="geolocalizacion">
-                <thead>
-                    <tr>
-                        <th>Latitud</th>
-                        <th>Longitud</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><label name="latitud" id="latitud"></label></td>
-                        <td><label name="longitud" id="longitud"></label></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <br>
-        <div id="divMunicipio">
-            <h1>El Municipio en el que me encuentro</h1>
-            <input type="button" name="" id="" onclick="municipio()" value="Mi Ubicaci&oacute;n">
-            <br>
-            <table id="municipio">
-                <thead>
-                    <tr>
-                        <th>Provincia</th>
-                        <th>Departamento</th>
-                        <th>Municipio</th>
-                    </tr>
-                </thead> 
-                <tbody id="miMunicipio">
-                </tbody>
-            </table>
-        </div>
-        <br>
-        <div id="divLocalidades">
-            <h1>Listar Localidades</h1>
-            <label>Provincia</label>
-            <select name="selectProvincias" id="selectProvincias" onchange="listaDelocalidades()">
-                <option>Cargando Listado de Provincias</option>
-            </select>
-            <br>
-            <div id="localidades">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Consultá tus coordenadas, tu municipio y el listado de localidades de Argentina usando la API georef de datos.gob.ar.">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://apis.datos.gob.ar; font-src https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:;">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='13' r='9' fill='%230F6E5A'/%3E%3Cpath d='M16 31c-4-6-9-11-9-18a9 9 0 0 1 18 0c0 7-5 12-9 18z' fill='none' stroke='%230F6E5A' stroke-width='2'/%3E%3C/svg%3E">
+    <title>Mi Ubicación</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/my-style.css">
+</head>
+<body id="page-content">
+
+    <header class="page-header">
+        <p class="page-header__eyebrow">Georreferenciación Argentina</p>
+        <h1 class="page-header__title">Mi ubicación</h1>
+        <p class="page-header__description">Consultá tus coordenadas, tu municipio y explorá el listado de localidades del país usando la API de datos.gob.ar.</p>
+    </header>
+
+    <main class="content">
+
+        <section class="card card--permission" id="permission-section" aria-labelledby="permission-title">
+            <h2 id="permission-title" class="card__title">Permiso de ubicación</h2>
+            <p class="card__text">Para identificar dónde estás, necesitamos que autorices el acceso a la ubicación de tu dispositivo.</p>
+            <button type="button" class="button button--primary" id="permission-button">
+                Permitir acceso a mi ubicación
+            </button>
+            <p id="permission-status" class="status-message" role="status" aria-live="polite"></p>
+        </section>
+
+        <section class="card card--coordinates is-hidden" id="coordinates-section" aria-labelledby="coordinates-title">
+            <h2 id="coordinates-title" class="card__title">Coordenadas actuales</h2>
+            <button type="button" class="button button--secondary" id="coordinates-button">Obtener mis coordenadas</button>
+            <div class="table-scroll">
+                <table id="coordinates-table" class="data-table is-hidden">
+                    <caption class="visually-hidden">Latitud y longitud de tu ubicación</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Latitud</th>
+                            <th scope="col">Longitud</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span id="latitude-value"></span></td>
+                            <td><span id="longitude-value"></span></td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-        </div>
-        <br>
-        <div id="divListaMunicipio">
-            <h1>Listar Municipios</h1>
-            <label>Provincia</label>
-            <select name="selectProvincias1" id="selectProvincias1" onchange="listaDeMunicipios()">
-                <option>Cargando Listado de Provincias</option>
-            </select>
-            <br>
-            <div id="municipios">
+        </section>
+
+        <section class="card card--municipality is-hidden" id="municipality-section" aria-labelledby="municipality-title">
+            <h2 id="municipality-title" class="card__title">Municipio en el que me encuentro</h2>
+            <button type="button" class="button button--secondary" id="municipality-button">Detectar mi municipio</button>
+            <div class="table-scroll">
+                <table id="municipality-table" class="data-table is-hidden">
+                    <caption class="visually-hidden">Provincia, departamento y municipio detectados</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">Provincia</th>
+                            <th scope="col">Departamento</th>
+                            <th scope="col">Municipio</th>
+                        </tr>
+                    </thead>
+                    <tbody id="municipality-table-body"></tbody>
+                </table>
             </div>
-        </div>
-        <script src="js/mi-script.js"></script>
-    </body>
+        </section>
+
+        <section class="card card--list is-hidden" id="localities-section" aria-labelledby="localities-title">
+            <h2 id="localities-title" class="card__title">Listar localidades</h2>
+            <div class="field">
+                <label for="localities-province-select">Provincia</label>
+                <select name="localities-province-select" id="localities-province-select" class="select">
+                    <option value="-1">Cargando listado de provincias…</option>
+                </select>
+            </div>
+            <div id="localities-result" class="result-list" aria-live="polite" aria-busy="false"></div>
+        </section>
+
+        <section class="card card--list is-hidden" id="municipalities-section" aria-labelledby="municipalities-title">
+            <h2 id="municipalities-title" class="card__title">Listar municipios</h2>
+            <div class="field">
+                <label for="municipalities-province-select">Provincia</label>
+                <select name="municipalities-province-select" id="municipalities-province-select" class="select">
+                    <option value="-1">Cargando listado de provincias…</option>
+                </select>
+            </div>
+            <div id="municipalities-result" class="result-list" aria-live="polite" aria-busy="false"></div>
+        </section>
+
+    </main>
+
+    <script type="module" src="js/main.js"></script>
+</body>
 </html>
