@@ -1,0 +1,41 @@
+name: CI
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+jobs:
+    build-and-test:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+
+            - name: Configurar pnpm
+              uses: pnpm/action-setup@v4
+
+            - name: Configurar Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'pnpm'
+
+            - name: Instalar dependencias
+              run: pnpm install --frozen-lockfile
+
+            - name: Formato (Prettier)
+              run: pnpm format:check
+
+            - name: Lint (oxlint)
+              run: pnpm lint
+
+            - name: Typecheck (TypeScript)
+              run: pnpm typecheck
+
+            - name: Tests (Vitest)
+              run: pnpm test
+
+            - name: Build de producción (Vite)
+              run: pnpm build

@@ -1,0 +1,28 @@
+@import 'tailwindcss';
+
+@theme {
+    --color-bg: #f6f7f4;
+    --color-surface: #ffffff;
+    --color-ink: #1c2321;
+    --color-muted: #5c6b66;
+    --color-border: #dce1da;
+    --color-accent: #0f6e5a;
+    --color-accent-dark: #0b5747;
+    --color-warning: #b3410e;
+    --color-warning-bg: #fbe9e2;
+    --font-heading: 'Space Grotesk', 'Segoe UI', sans-serif;
+    --font-body: 'Inter', 'Segoe UI', sans-serif;
+    --radius-card: 10px;
+    --shadow-card: 0 1px 2px rgba(28, 35, 33, 0.06), 0 4px 12px rgba(28, 35, 33, 0.05);
+}
+
+@layer base {
+    body {
+        @apply m-0 bg-bg font-body leading-normal text-ink;
+    }
+
+    h1,
+    h2 {
+        @apply m-0 font-heading;
+    }
+}
