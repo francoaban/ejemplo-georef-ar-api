@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { act, renderHook, waitFor } from '@testing-library/react'
+import { act, renderHook, waitFor } from './test-utils.js'
 
 vi.mock('../lib/api.js', () => ({
     getCurrentPosition: vi.fn()
@@ -57,6 +57,10 @@ describe('useCoordinates', () => {
         )
     })
 
+    /**
+     * Cubre el fix aplicado: un reintento fallido no debe dejar visibles
+     * datos de un éxito anterior junto al mensaje de error nuevo.
+     */
     it('limpia las coordenadas previas al reintentar, aunque el reintento falle', async () => {
         mockedGetCurrentPosition
             .mockResolvedValueOnce({ coords: { latitude: 1, longitude: 2 } } as GeolocationPosition)

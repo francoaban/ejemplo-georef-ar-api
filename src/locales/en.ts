@@ -1,26 +1,5 @@
 import type { MessagesShape } from './es.js'
 
-/**
- * English translation.
- *
- * Deliberately typed with `satisfies MessagesShape`, not
- * `: MessagesShape`. The difference matters:
- *
- * - `const en: MessagesShape = {...}` would WIDEN every literal to its
- *   base type (each string becomes `string`, losing the literal), and
- *   more importantly it lets TypeScript silently allow an EXTRA key
- *   that doesn't exist in `es.ts` without complaint, since structural
- *   typing only requires "at least these fields".
- * - `const en = {...} satisfies MessagesShape` checks the object
- *   against the shape (every key required, correct value type per
- *   key: string vs function) while still letting TypeScript infer the
- *   precise literal types for `en` itself.
- *
- * Practical effect: delete a key here, misspell one, or turn a
- * `(msg: string) => string` into a plain string, and this file fails
- * to compile — `pnpm typecheck` (and CI) catches it before it ships,
- * not a user noticing a missing translation in production.
- */
 export const en = {
     header: {
         eyebrow: 'Argentina Geolocation',

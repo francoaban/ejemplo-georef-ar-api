@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from './test-utils.js'
 import userEvent from '@testing-library/user-event'
 
 vi.mock('../lib/api.js', () => ({
@@ -61,21 +61,11 @@ describe('App: flujo de permiso y visibilidad del contenido', () => {
         expect(screen.getByRole('heading', { name: 'Listar municipios' })).toBeInTheDocument()
     })
 
-    /**
-     * Este es el test que la versión vanilla nunca tuvo. Reproduce
-     * exactamente el escenario del bug detectado en la revisión de
-     * arquitectura: un error que ocurre DESPUÉS de conceder el permiso
-     * (cuando la sección de permiso ya no está en pantalla). En la
-     * versión anterior, ese error se escribía en un <p> dentro de la
-     * sección oculta y el usuario nunca lo veía. Acá cada tarjeta
-     * muestra su propio error, así que no hay forma de que quede
-     * "huérfano" en una sección invisible.
-     */
     it('un error posterior al permiso es visible, no queda oculto en la sección de permiso', async () => {
         const user = userEvent.setup()
         mockedGetCurrentPosition
-            .mockResolvedValueOnce({ coords: {} } as GeolocationPosition) // primero: conceder el permiso
-            .mockRejectedValueOnce(new Error('Timeout de red')) // luego: falla al pedir coordenadas
+            .mockResolvedValueOnce({ coords: {} } as GeolocationPosition)
+            .mockRejectedValueOnce(new Error('Timeout de red'))
 
         render(<App />)
 
@@ -86,7 +76,6 @@ describe('App: flujo de permiso y visibilidad del contenido', () => {
             ).toBeInTheDocument()
         })
 
-        // La sección de permiso ya no está en el árbol (no solo "oculta").
         expect(
             screen.queryByRole('heading', { name: 'Permiso de ubicación' })
         ).not.toBeInTheDocument()

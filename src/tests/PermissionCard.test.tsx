@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from './test-utils.js'
 import userEvent from '@testing-library/user-event'
 
 vi.mock('../lib/api.js', () => ({
@@ -46,12 +46,6 @@ describe('PermissionCard', () => {
         expect(button).toBeEnabled()
     })
 
-    /**
-     * Antes de este fix, solo 'denied' (permiso rechazado) recibía el
-     * botón de "Reintentar"; 'error' (otro fallo del navegador, sin
-     * relación con el permiso) dejaba el botón en su estado original,
-     * una inconsistencia sin justificación funcional.
-     */
     it('también muestra "Reintentar" ante un error que no es de permiso denegado', async () => {
         const user = userEvent.setup()
         mockedGetCurrentPosition.mockRejectedValue({

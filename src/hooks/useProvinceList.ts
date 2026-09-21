@@ -3,7 +3,7 @@ import { useCachedResource } from './useCachedResource.js'
 import { API_BASE, fetchJson } from '../lib/api.js'
 import { parseListResponse, type NamedItem } from '../lib/schemas.js'
 import { sortByName } from '../lib/sortByName.js'
-import { messages } from '../lib/messages.js'
+import { useLocale } from '../i18n/localeContext.js'
 
 export type ListEndpoint = 'localidades' | 'municipios'
 
@@ -17,6 +17,7 @@ interface UseProvinceListResult {
 
 export function useProvinceList(endpoint: ListEndpoint): UseProvinceListResult {
     const [province, setProvince] = useState('-1')
+    const { messages } = useLocale()
 
     const fetcher = useCallback(
         async (signal: AbortSignal) => {

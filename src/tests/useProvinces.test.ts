@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { renderHook, waitFor } from '@testing-library/react'
+import { renderHook, waitFor } from './test-utils.js'
 
 vi.mock('../lib/api.js', () => ({
     API_BASE: 'https://apis.datos.gob.ar/georef/api',

@@ -3,7 +3,8 @@ import { useProvinceList, type ListEndpoint } from '../hooks/useProvinceList.js'
 import type { Provincia } from '../lib/schemas.js'
 import { ErrorMessage } from './ErrorMessage.js'
 import { Spinner } from './Spinner.js'
-import { messages } from '../lib/messages.js'
+import { useLocale } from '../i18n/localeContext.js'
+import { cardClasses, cardTitleClasses, selectClasses } from '../styles/variants.js'
 
 interface ProvinceListCardProps {
     title: string
@@ -19,20 +20,21 @@ export function ProvinceListCard({
     provincesLoading
 }: ProvinceListCardProps) {
     const { province, setProvince, items, loading, error } = useProvinceList(endpoint)
+    const { messages } = useLocale()
     const selectId = useId()
     const titleId = useId()
 
     return (
-        <section className="flex flex-col gap-[0.9rem] rounded-card border border-border border-l-4 border-l-accent bg-surface p-6 shadow-card" aria-labelledby={titleId}>
-            <h2 id={titleId} className="text-[1.15rem]">
+        <section className={cardClasses()} aria-labelledby={titleId}>
+            <h2 id={titleId} className={cardTitleClasses}>
                 {title}
             </h2>
 
-            <div className="flex flex-col gap-[0.4rem]">
-                <label className="text-[0.9rem] font-semibold" htmlFor={selectId}>{messages.provinceList.provinciaLabel}</label>
+            <div className="flex flex-col gap-[0.9rem]">
+                <label htmlFor={selectId}>{messages.provinceList.provinciaLabel}</label>
                 <select
                     id={selectId}
-                    className="rounded-lg border border-border bg-surface px-[0.7rem] py-[0.55rem] font-body text-[0.95rem] text-ink focus-visible:outline-3 focus-visible:outline-accent focus-visible:outline-offset-2"
+                    className={selectClasses}
                     value={province}
                     disabled={provincesLoading}
                     onChange={event => setProvince(event.target.value)}
@@ -52,17 +54,22 @@ export function ProvinceListCard({
 
             <ErrorMessage>{error}</ErrorMessage>
 
-            <div className="empty:hidden max-h-[260px] overflow-y-auto rounded-lg border border-border px-2 py-1" aria-live="polite" aria-busy={loading}>
+            <div aria-live="polite" aria-busy={loading}>
                 {loading && (
-                    <p className="m-0 flex items-center gap-[0.6rem] px-[0.2rem] py-[0.6rem] text-muted">
+                    <p className="flex items-center gap-2 text-text-muted">
                         <Spinner />
                         {messages.provinceList.loading}
                     </p>
                 )}
                 {!loading && items.length > 0 && (
-                    <ol className="m-0 list-decimal pl-[1.4rem]">
-                        {items.map(item => (
-                            <li className="border-b border-dashed border-border py-[0.3rem] last:border-b-0" key={item.nombre}>{item.nombre}</li>
+                    <ol className="max-h-64 overflow-y-auto rounded-lg border border-border p-4">
+                        {items.map((item, index) => (
+                            <li
+                                className="border-b border-border py-2 last:border-b-0"
+                                key={`${item.nombre}-${index}`}
+                            >
+                                {item.nombre}
+                            </li>
                         ))}
                     </ol>
                 )}

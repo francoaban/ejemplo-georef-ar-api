@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react'
 import { getCurrentPosition } from '../lib/api.js'
-import { messages } from '../lib/messages.js'
+import { useLocale } from '../i18n/localeContext.js'
 import { reportError } from '../lib/telemetry.js'
 
 export interface Coordinates {
@@ -19,6 +19,7 @@ export function useCoordinates(): UseCoordinatesResult {
     const [coordinates, setCoordinates] = useState<Coordinates | null>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
+    const { messages } = useLocale()
 
     const fetchCoordinates = useCallback(async () => {
         setLoading(true)
@@ -37,7 +38,7 @@ export function useCoordinates(): UseCoordinatesResult {
         } finally {
             setLoading(false)
         }
-    }, [])
+    }, [messages])
 
     return { coordinates, loading, error, fetchCoordinates }
 }

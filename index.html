@@ -9,11 +9,12 @@
         />
         <meta
             http-equiv="Content-Security-Policy"
-            content="default-src 'self'; script-src 'self'; connect-src 'self' https://apis.datos.gob.ar; img-src 'self' data:; object-src 'none'; base-uri 'self';"
+            content="default-src 'self'; script-src 'self'; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; font-src 'self'; connect-src 'self' https://apis.datos.gob.ar; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;"
         />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <title>Mi Ubicación</title>
     </head>
+
     <body>
         <div id="root"></div>
         <script type="module" src="/src/main.tsx"></script>

@@ -9,6 +9,7 @@ import '@fontsource/inter/600.css'
 import './index.css'
 import App from './App.js'
 import { ErrorBoundary } from './components/ErrorBoundary.js'
+import { LocaleProvider } from './i18n/LocaleProvider.js'
 import { reportError } from './lib/telemetry.js'
 
 window.addEventListener('unhandledrejection', event => {
@@ -22,8 +23,10 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
     <StrictMode>
-        <ErrorBoundary>
-            <App />
-        </ErrorBoundary>
+        <LocaleProvider>
+            <ErrorBoundary>
+                <App />
+            </ErrorBoundary>
+        </LocaleProvider>
     </StrictMode>
 )

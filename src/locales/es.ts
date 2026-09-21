@@ -1,10 +1,3 @@
-/**
- * Español — locale por defecto de la app, y fuente de verdad de la
- * FORMA de `messages`. Todo locale nuevo se valida contra el tipo
- * inferido de este archivo (`MessagesShape`), no al revés: agregar,
- * quitar o renombrar una clave acá es lo único que cambia el contrato
- * que los demás locales tienen que cumplir.
- */
 export const es = {
     header: {
         eyebrow: 'Georreferenciación Argentina',
@@ -62,11 +55,4 @@ export const es = {
     }
 }
 
-/**
- * El "contrato" que cualquier otro locale debe cumplir: mismas claves,
- * mismos tipos de valor (string vs función) en cada una. `en.ts` se
- * valida contra este tipo con `satisfies`, no con una anotación de
- * tipo — ver el comentario en `en.ts` para por qué esa diferencia
- * importa.
- */
 export type MessagesShape = typeof es

@@ -2,7 +2,7 @@
 
 Aplicación web que permite consultar la ubicación geográfica del usuario (coordenadas, provincia, departamento y municipio) y explorar el listado oficial de localidades y municipios de Argentina, usando la API pública de georreferenciación de datos.gob.ar.
 
-Reescrita en **React + TypeScript + Vite** a partir de una versión previa en HTML/CSS/JS vanilla. Cada migración fue una oportunidad para corregir deuda real, no solo trasladar sintaxis — ver [Historial](#historial-del-proyecto).
+Reescrita en **React + TypeScript + Vite + Tailwind CSS** a partir de una versión previa en HTML/CSS/JS vanilla. Cada migración fue una oportunidad para corregir deuda real, no solo trasladar sintaxis — ver [Historial](#historial-del-proyecto).
 
 ---
 
@@ -10,6 +10,7 @@ Reescrita en **React + TypeScript + Vite** a partir de una versión previa en HT
 
 - [Estructura del proyecto](#estructura-del-proyecto)
 - [Tecnología utilizada](#tecnología-utilizada)
+- [Estilos (Tailwind CSS)](#estilos-tailwind-css)
 - [Arquitectura y gestión de estado](#arquitectura-y-gestión-de-estado)
 - [Tipado y validación de datos](#tipado-y-validación-de-datos)
 - [API de consulta](#api-de-consulta)
@@ -34,28 +35,36 @@ Reescrita en **React + TypeScript + Vite** a partir de una versión previa en HT
 mi-ubicacion-react/
 ├── index.html                    # Entry point de Vite
 ├── package.json
+├── pnpm-lock.yaml                 # Lockfile único del proyecto (pnpm)
 ├── tsconfig.json / tsconfig.app.json / tsconfig.node.json
 ├── vite.config.ts                # Config de Vite + Vitest
 ├── .oxlintrc.json                # Reglas de oxlint (incluye jsx-a11y)
 ├── .prettierrc.json              # Formato de código
 ├── .github/workflows/ci.yml      # CI: formato + lint + typecheck + tests + build
+├── .vscode/
+│   ├── launch.json                # Depuración de la app con Chrome
+│   └── tasks.json                 # Tareas pnpm: install, test, build, dev y preview
 ├── public/
 │   └── favicon.svg
 └── src/
     ├── main.tsx                   # Monta <App/> envuelto en ErrorBoundary
     ├── App.tsx                    # Orquesta el flujo permiso → contenido
-    ├── index.css                  # Tema Tailwind y estilos base globales
+    ├── index.css                  # `@theme` de Tailwind: paleta, tipografía, breakpoints
     ├── vite-env.d.ts
+    ├── styles/
+    │   └── variants.ts            # Composición de utilidades Tailwind (botones, tarjetas, tablas)
     ├── lib/
     │   ├── api.ts                  # fetch con reintentos + Geolocation API
     │   ├── cache.ts                 # Caché de sesión (sessionStorage)
     │   ├── schemas.ts                # Esquemas zod de las respuestas de la API
-    │   ├── messages.ts                # Shim: reexporta locales/es.ts (sin selector todavía)
-    │   ├── telemetry.ts                # Punto único de reporte de errores
-    │   └── sortByName.ts               # Orden alfabético compartido (collation es)
+    │   ├── telemetry.ts               # Punto único de reporte de errores
+    │   └── sortByName.ts              # Orden alfabético compartido (collation es)
     ├── locales/
     │   ├── es.ts                   # Locale español — fuente de verdad de MessagesShape
     │   └── en.ts                   # Locale inglés — validado con `satisfies MessagesShape`
+    ├── i18n/
+    │   ├── localeContext.ts        # LocaleContext + useLocale() (aparte, por Fast Refresh)
+    │   └── LocaleProvider.tsx      # Detección, persistencia y sync de document.*
     ├── hooks/
     │   ├── useGeolocationPermission.ts   # Máquina de estados del permiso
     │   ├── useCoordinates.ts              # Coordenadas actuales
@@ -65,6 +74,7 @@ mi-ubicacion-react/
     │   └── useProvinceList.ts             # Listado de localidades/municipios (envoltorio)
     ├── components/
     │   ├── Header.tsx
+    │   ├── LocaleSwitcher.tsx      # Selector de idioma (es/en)
     │   ├── PermissionCard.tsx
     │   ├── CoordinatesCard.tsx
     │   ├── MunicipalityCard.tsx
@@ -74,9 +84,14 @@ mi-ubicacion-react/
     │   └── Spinner.tsx
     └── tests/
         ├── setup.ts                          # Silencia console.error esperado en toda la suite
+        ├── test-utils.tsx                     # render/renderHook envueltos en <LocaleProvider>
         ├── App.test.tsx                        # Integración: flujo completo
+        ├── CoordinatesCard.test.tsx             # Éxito, carga y error de coordenadas
+        ├── MunicipalityCard.test.tsx            # Éxito, carga y error de municipio
         ├── ProvinceListCard.test.tsx
         ├── PermissionCard.test.tsx
+        ├── LocaleProvider.test.tsx
+        ├── LocaleSwitcher.test.tsx
         ├── ErrorBoundary.test.tsx
         ├── useGeolocationPermission.test.ts
         ├── useCoordinates.test.ts
@@ -95,9 +110,12 @@ mi-ubicacion-react/
 
 | Capa          | Responsabilidad                                                                                                                                                                                                                   |
 | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lib/`        | Acceso a red, almacenamiento, validación de datos, strings y telemetría. Sin JSX, sin conocimiento de React — reusable en cualquier otro contexto (Node, otra UI).                                                                |
+| `lib/`        | Acceso a red, almacenamiento, validación de datos y telemetría. Sin JSX, sin conocimiento de React — reusable en cualquier otro contexto (Node, otra UI).                                                                         |
+| `locales/`    | Los mensajes de la UI en cada idioma — sin lógica, solo datos y su tipo (`MessagesShape`).                                                                                                                                        |
+| `i18n/`       | El mecanismo: contexto, detección, persistencia y sincronización con `document.*`. Ningún otro archivo sabe cómo se elige o se guarda el locale — solo consume `useLocale()`.                                                     |
 | `hooks/`      | Un hook por feature. Cada uno encapsula su propio estado (`data`, `loading`, `error`) y expone una API mínima al componente. No conocen el DOM.                                                                                   |
 | `components/` | Solo presentación. Reciben datos y callbacks de los hooks, renderizan JSX. `ProvinceListCard` es genérico y parametrizado (`endpoint`, `title`) — reemplaza el par de secciones casi idénticas que existía en la versión vanilla. |
+| `styles/`     | Composición de utilidades de Tailwind reutilizadas entre componentes (variantes de botón, tarjeta, celda de tabla) — evita repetir la misma cadena de clases palabra por palabra en 3 o 4 archivos.                               |
 | `App.tsx`     | Único componente que conoce la composición completa de la página y decide qué se muestra según el estado del permiso.                                                                                                             |
 
 ---
@@ -106,9 +124,9 @@ mi-ubicacion-react/
 
 - **React 19** con hooks (sin clases, salvo `ErrorBoundary`, que todavía lo requiere).
 - **TypeScript** en modo `strict`, con `noUnusedLocals` y `noUnusedParameters`. `pnpm build` corre `tsc -b` antes de `vite build` — un error de tipos rompe el build, no es solo una advertencia del editor.
+- **Tailwind CSS v4** (`@tailwindcss/vite`) para la mayor parte de los estilos — todos los componentes usan utilidades Tailwind o variantes compartidas; ver [Estilos (Tailwind CSS)](#estilos-tailwind-css).
 - **zod** para validar en runtime la forma de las respuestas de la API externa, con los tipos de TypeScript inferidos del esquema (`z.infer`).
 - **Vite 8** como build tool y dev server — usa el nuevo pipeline `oxc` para transformar y bundlear.
-- **Tailwind CSS 4** integrado mediante el plugin oficial de Vite; los componentes usan sus utilidades para layout, estados y responsive.
 - **Vitest + jsdom** para tests unitarios y de integración.
 - **@testing-library/react** + **@testing-library/user-event** — tests que simulan interacción real del usuario, no implementación interna de los componentes.
 - **oxlint** — linter basado en Rust, con los plugins `react` (`rules-of-hooks`, detección de `setState` dentro de efectos) y `jsx-a11y` (accesibilidad) habilitados.
@@ -120,15 +138,34 @@ No hay backend propio: toda la lógica corre en el navegador del usuario.
 
 ---
 
+## Estilos (Tailwind CSS)
+
+La mayor parte de la UI se estiliza con utilidades de Tailwind directamente en el JSX. `src/index.css` contiene la entrada de Tailwind, los tokens `@theme` y los estilos base. Todos los componentes usan utilidades Tailwind o variantes compartidas. La identidad visual (paleta, tipografías, radios, sombra) se expresa mediante `@theme`, así que `bg-accent`, `font-heading`, `rounded-card`, etc. son utilidades generadas a partir de esos tokens.
+
+```css
+/* src/index.css */
+@theme {
+    --color-accent: #0f6e5a;
+    --font-heading: 'Space Grotesk', 'Segoe UI', sans-serif;
+    --radius-card: 10px;
+    --breakpoint-tablet: 700px;
+    --breakpoint-desktop: 1080px;
+    /* ... */
+}
+```
+
+### Por qué un módulo de variantes (`src/styles/variants.ts`) en vez de repetir clases
+
+Un botón necesita ~15 utilidades encadenadas (`inline-flex items-center gap-2 rounded-lg px-5 py-2.5 ...`). Copiar esa cadena en `PermissionCard`, `CoordinatesCard` y `MunicipalityCard` — con la única diferencia real siendo 2-3 clases de color según la variante — es el mismo tipo de duplicación que ya se resolvió en otras capas del proyecto (`sortByName.ts`, `useCachedResource.ts`). La solución es la misma: una función (`buttonClasses('primary' | 'secondary' | 'retry')`, `cardClasses('accent' | 'warning')`) como única fuente de verdad de cada variante visual, en vez de una convención que hay que acordarse de copiar bien.
+
+---
+
 ## Arquitectura y gestión de estado
 
-A diferencia de la versión vanilla —donde el estado vivía disperso en clases CSS y en el contenido del DOM (`classList.contains('is-hidden')`, `select.value`, `innerHTML` como fuente de verdad)—, acá el estado es explícito y vive en `useState` de React:
-
 - **`useGeolocationPermission`** modela el permiso como una máquina de estados explícita (`idle | requesting | granted | denied | unsupported | error`), no como una combinación de `disabled`, clases CSS y texto libre. `denied` y `error` reciben el mismo tratamiento de "Reintentar" — para el usuario son el mismo caso: algo no funcionó y puede volver a intentar.
-- **`useCachedResource`** es la única implementación de fetch+caché+cancelación+protección de carrera del proyecto. `useProvinces` y `useProvinceList` son envoltorios finos sobre este hook — antes cada uno reimplementaba esa lógica por su lado, con variaciones sutiles que generaban 2 warnings de lint distintos; ahora hay 1 solo, centralizado y documentado.
-- **Cancelación real**: el `useEffect` de `useCachedResource` cancela la petición en curso tanto si cambia `cacheKey` como si el componente se desmonta — la versión vanilla nunca manejaba el segundo caso.
+- **`useCachedResource`** es la única implementación de fetch+caché+cancelación+protección de carrera del proyecto. `useProvinces` y
+- **Cancelación real**: el `useEffect` de `useCachedResource` cancela la petición en curso tanto si cambia `cacheKey` como si el componente se desmonta.
 - **Sin manipulación manual del DOM**: no hay un solo `document.getElementById` en toda la capa de componentes. React decide qué renderizar a partir del estado.
-- **Sin `escapeHtml()` manual**: React escapa automáticamente todo lo que se interpola con `{}` en JSX — esa clase entera de bugs desaparece por diseño, no por disciplina del desarrollador.
 
 ---
 
@@ -170,7 +207,12 @@ Todas las llamadas pasan por `fetchJson()`, que reintenta hasta 2 veces con back
 
 ## Seguridad
 
-- **CSP estricta** declarada en `index.html`: `script-src 'self'`, `object-src 'none'`, `base-uri 'self'`, `connect-src` limitado a la API de datos.gob.ar. Sin `'unsafe-inline'` en ninguna directiva, y **sin excepciones para dominios de terceros** — al autoalojar las fuentes con `@fontsource`, no hace falta permitir `fonts.googleapis.com`/`fonts.gstatic.com`.
+- **CSP estricta para producción** declarada en `index.html`: `script-src 'self'`, `script-src-attr 'none'`, `style-src 'self'`, `style-src-attr 'none'`, `font-src 'self'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `upgrade-insecure-requests` y `connect-src` limitado a la API de datos.gob.ar. No usa `'unsafe-inline'` ni `'unsafe-eval'`; al autoalojar las fuentes con `@fontsource`, no hace falta permitir `fonts.googleapis.com`/`fonts.gstatic.com`.
+- **Desarrollo separado**: esta CSP está pensada para `pnpm build` + `pnpm preview` o el hosting de producción. No se agregó ninguna configuración que modifique el HMR o el WebSocket de `pnpm dev`.
+- **`frame-ancestors`**: no se agrega al meta porque la especificación indica que esa directiva se ignora allí. En producción debe enviarse como header HTTP para impedir que la aplicación sea embebida: `frame-ancestors 'none'`.
+- **Header recomendado en producción**: enviar exactamente `Content-Security-Policy: default-src 'self'; script-src 'self'; script-src-attr 'none'; style-src 'self'; style-src-attr 'none'; font-src 'self'; connect-src 'self' https://apis.datos.gob.ar; img-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests`. El meta queda como defensa en profundidad cuando el hosting todavía no configura headers.
+- **Resultado de la auditoría runtime**: no se encontraron `<style>` ni atributos `style="..."` literales, `eval`, `new Function`, timers con strings, handlers HTML inline, inyección HTML ni librerías cliente que agreguen scripts/estilos inline. Las únicas llamadas externas observadas fueron `https://apis.datos.gob.ar/georef/api/...`; no se detectaron violaciones CSP en `pnpm preview`.
+- **Permissions Policy recomendada**: la app usa únicamente geolocalización. El hosting puede enviar `Permissions-Policy: geolocation=(self), camera=(), microphone=(), payment=(), usb=()`. No es una directiva CSP y no debe agregarse al meta CSP.
 - **Sin XSS por diseño**: al no usarse `dangerouslySetInnerHTML` en ningún componente, no existe superficie de ataque de inyección de HTML — React escapa todo el contenido dinámico automáticamente.
 - **Validación de las respuestas de la API** (`zod`, ver arriba): reduce la superficie de fallos inesperados si el servicio externo cambia su contrato.
 - **`ErrorBoundary`**: si algo lanza un error inesperado durante el render, la app muestra un mensaje de recuperación en vez de una pantalla en blanco, y lo reporta vía `reportError` (ver [Telemetría](#telemetría)).
@@ -204,13 +246,17 @@ Puntos conectados:
 
 ## Internacionalización (i18n)
 
-**Fase 1 — hecha.** La app tiene dos locales completos: `src/locales/es.ts` (español, fuente de verdad) y `src/locales/en.ts` (inglés). Ningún componente conoce un string literal — todos consumen `messages.sección.clave`, así que agregar un locale nuevo no toca los 8 componentes, solo agrega un archivo.
+**Completo.** La app soporta español e inglés con selector de idioma, persistencia y detección automática — no queda ningún texto hardcodeado en un componente ni un shim apuntando a un solo idioma fijo.
 
-### Por qué esto no se resolvió con `zod`
+### Fase 1 — la forma de los mensajes
+
+Dos locales completos: `src/locales/es.ts` (español, fuente de verdad) y `src/locales/en.ts` (inglés). Todos los componentes y hooks consumen `messages.sección.clave` a través de `useLocale()` — nunca un string literal.
+
+#### Por qué esto no se resolvió con `zod`
 
 `zod` valida datos externos en runtime — es la herramienta correcta para las respuestas de la API (`lib/schemas.ts`), porque esos datos llegan de afuera y no se puede confiar en su forma hasta verla. Los mensajes de traducción son distintos: son un objeto estático, escrito en el propio código, conocido en compile-time. Para garantizar que `en.ts` tenga exactamente las mismas claves que `es.ts` (ni de más, ni de menos, con el mismo tipo de valor en cada una), la herramienta correcta es el sistema de tipos de TypeScript, no una librería de validación en runtime — es gratis en tiempo de ejecución y el error aparece en el editor, no en producción.
 
-### Cómo se garantiza la paridad entre locales
+#### Cómo se garantiza la paridad entre locales
 
 ```ts
 // locales/es.ts — fuente de verdad de la FORMA
@@ -235,25 +281,28 @@ export const en = {
 
 **Un bug real que este mismo mecanismo atrapó durante el desarrollo**: la primera versión de `es.ts` tenía `as const` al final del objeto. Eso convierte cada string en su tipo literal exacto (`"Mi ubicación"` en vez de `string`), así que `MessagesShape` terminaba pidiendo que `en.ts` tuviera el string `"Mi ubicación"` en esa clave — literalmente imposible de traducir. `pnpm typecheck` lo rechazó con más de 30 errores en el primer intento. La corrección fue quitar el `as const`: la fuente de verdad necesita describir la _forma_ (`string`, o función `string → string`), no el _valor_ exacto.
 
-### Test de paridad en runtime (defensa en profundidad)
+`satisfies` ya garantiza la paridad en compile-time, pero `src/tests/locales.test.ts` lo vuelve a chequear en runtime — por si algún día se corre `vitest` sin haber corrido `tsc` antes.
 
-`satisfies` ya lo garantiza en compile-time, pero `src/tests/locales.test.ts` lo vuelve a chequear en runtime — por si algún día se corre `vitest` sin haber corrido `tsc` antes (un watch mode suelto, por ejemplo), sin depender de que el typecheck se haya ejecutado.
+### Fase 2 — selector de locale
 
-### Lo que falta — Fase 2
+- **`src/i18n/localeContext.ts`** define `LocaleContext` y el hook `useLocale()` — separados del componente `LocaleProvider` a propósito (mezclarlos en un mismo archivo rompe React Fast Refresh; oxlint lo señala con `react/only-export-components`). `useLocale()` lanza si se usa fuera de un `<LocaleProvider>`, en vez de devolver silenciosamente un locale por defecto: un error explícito en desarrollo es preferible a un componente que muestra el idioma equivocado sin que nadie lo note.
+- **`src/i18n/LocaleProvider.tsx`** — el componente. Detecta el locale inicial en este orden: preferencia guardada en `localStorage` → `navigator.language` (si empieza con `"en"`) → español por defecto. Persiste cada cambio en `localStorage` (degrada sin romper si falla — modo privado, cuota excedida). Sincroniza `document.documentElement.lang`, `document.title` y `<meta name="description">` en un efecto — esos tres viven en `index.html`, fuera del árbol de React, así que `messages.*` no los cubre por sí solo.
+- **`src/components/LocaleSwitcher.tsx`** — dos botones (no un `<select>`: con solo dos opciones, ambas quedan visibles sin abrir nada), dentro de un `<fieldset>` con `<legend>` visualmente oculto en vez de `role="group"` + `aria-label` (más semántico; lo señaló el propio linter). `aria-pressed` comunica cuál está activo.
+- **El mensaje de permiso se deriva, no se congela**: `useGeolocationPermission` calcula el texto a partir de `status` + el locale activo en cada render, en vez de guardar el string ya resuelto en el estado en el momento del evento. Si guardara el string, cambiar de idioma con un mensaje ya en pantalla lo dejaría congelado en el idioma viejo hasta la próxima acción del usuario.
+- **`ErrorBoundary` es una clase**, así que no puede usar `useLocale()` (es un hook). Lee el locale activo vía `static contextType = LocaleContext` — la forma en la que los componentes de clase consumen contexto — con un fallback a español si por algún motivo se renderizara fuera de un `LocaleProvider`.
 
-- **Selector de locale**: `lib/messages.ts` hoy es un shim que reexporta `locales/es.ts` sin condición — sigue siendo español fijo. Falta un hook (`useMessages()` o similar) que elija entre `es`/`en` según el idioma activo (selector manual, `navigator.language`, o una ruta `/en`).
-- **`<title>` y `<meta name="description">` de `index.html`**: viven fuera del árbol de React, en HTML estático — `messages.ts` no los cubre. El día que se implemente el selector, hace falta setearlos a mano vía `document.title` en un efecto (o resolverlo en build-time si en algún momento se migra a SSG).
+### Cómo probarlo
+
+El selector de idioma está en el encabezado de la página. El cambio es inmediato (sin recargar), persiste entre visitas (misma pestaña o no, vía `localStorage`), y si nunca elegiste nada, un navegador configurado en inglés arranca en inglés automáticamente.
 
 ---
 
 ## Tests automatizados
 
-**69 tests** con Vitest + React Testing Library, en dos niveles:
+**93 tests en 19 archivos** con Vitest + React Testing Library, en dos niveles:
 
 - **Unitarios** (`lib/`, hooks individuales): prueban cada pieza en aislamiento, mockeando sus dependencias.
 - **De integración** (`App.test.tsx`): montan la aplicación completa y verifican el flujo real del usuario. Incluye el test que la versión vanilla nunca tuvo — reproduce el bug de arquitectura original (un error que ocurre _después_ de conceder el permiso) y verifica que sea visible, no que quede huérfano en una sección oculta.
-
-Algunos tests documentan explícitamente una regresión real detectada durante el desarrollo, no solo el comportamiento esperado — por ejemplo, `useCachedResource.test.ts` tiene un test dedicado a que `loading` vuelva a `false` tras un `AbortError`, porque un diseño intermedio del hook lo dejaba trabado en `true` para siempre en ese caso.
 
 ```bash
 pnpm test              # corre toda la suite una vez
@@ -272,7 +321,7 @@ pnpm format            # Prettier, aplica el formato
 pnpm format:check      # Prettier, solo verifica (usado en CI)
 ```
 
-`oxlint` señala hoy **1 warning** (no error), centralizado en `useCachedResource.ts` y documentado inline en el propio código — ver [Deuda técnica conocida](#deuda-técnica-conocida).
+`oxlint` señala hoy **1 warning** (no error), centralizado en `useCachedResource.ts`. Corresponde a una actualización de estado dentro de un efecto y queda documentado como deuda técnica; no impide el build ni la ejecución de tests.
 
 ---
 
@@ -284,43 +333,82 @@ pnpm format:check      # Prettier, solo verifica (usado en CI)
 
 ## Desarrollo local
 
+### Requisitos
+
+- Node.js 20 o superior. CI usa Node.js 20.
+- pnpm 9.12.3, declarado en `package.json`. Con Corepack: `corepack enable` y luego `corepack prepare pnpm@9.12.3 --activate`.
+- Un navegador con soporte para la Geolocation API. Fuera de `localhost`, el sitio debe servirse mediante HTTPS.
+
+### Instalar y ejecutar
+
 ```bash
-pnpm install
-pnpm dev        # servidor de desarrollo con HMR
-pnpm build      # tsc -b && vite build → dist/
-pnpm preview    # sirve el build de dist/ localmente
+pnpm install --frozen-lockfile
+pnpm dev                         # http://localhost:5173, HMR habilitado
+pnpm build                       # typecheck + build Vite en dist/
+pnpm preview                     # sirve dist/ en http://localhost:4173
+pnpm preview --host 127.0.0.1   # alternativa explícita para acceso local
 ```
 
-> El proyecto declara `"packageManager": "pnpm@9.12.3"` (Corepack). Si no tenés `pnpm`: `corepack enable` o `npm install -g pnpm`.
+`pnpm dev` es el servidor de desarrollo y usa el cliente HMR de Vite. La CSP documentada en [Seguridad](#seguridad) está pensada para el artefacto de producción y no debe usarse para evaluar el funcionamiento del HMR.
+
+También están disponibles las tareas equivalentes desde VS Code: `install-dependencies`, `test`, `build`, `dev` y `preview`. La configuración de depuración `Debug Vite (pnpm dev)` ejecuta primero `prepare-debug` y después inicia `dev`.
+
+### Comandos de verificación
+
+```bash
+pnpm typecheck       # tsc -b
+pnpm lint            # oxlint
+pnpm test            # Vitest, 93 tests en 19 archivos
+pnpm format:check    # Prettier en modo verificación
+pnpm build           # typecheck + vite build
+```
+
+Para probar el build real antes de desplegar, ejecutar `pnpm build` y luego `pnpm preview`. El servidor de preview no reemplaza la configuración de headers del hosting: `frame-ancestors` y `Permissions-Policy` solo se pueden comprobar completamente contra los headers HTTP reales del entorno de despliegue.
 
 ---
 
 ## Build y despliegue
 
-`pnpm build` genera un `dist/` completamente estático (HTML + JS + CSS + fuentes, todo con hashes de contenido), desplegable en cualquier hosting estático:
+`pnpm build` genera un `dist/` completamente estático (HTML + JS + CSS + fuentes, con hashes de contenido en los assets), desplegable en cualquier hosting estático:
 
 - **Netlify / Vercel**: build command `pnpm build`, publish directory `dist`.
 - **GitHub Pages**: requiere configurar `base` en `vite.config.ts` si el sitio no se sirve desde la raíz del dominio.
 - **Cualquier hosting tradicional**: subir el contenido de `dist/` a la raíz o a un subdirectorio.
 
+El despliegue local de producción es `pnpm build` seguido de `pnpm preview`; no requiere backend propio ni variables de entorno. Las llamadas a la API se realizan desde el navegador hacia `https://apis.datos.gob.ar/georef/api`.
+
 Como la Geolocation API requiere un contexto seguro, el sitio debe servirse bajo **HTTPS** (u opcionalmente `http://localhost` en desarrollo). Netlify, Vercel y GitHub Pages proveen HTTPS automático.
 
----
+No hay en este repositorio evidencia de un proveedor concreto ni archivos de headers (`vercel.json`, `netlify.toml`, `nginx.conf`, `Dockerfile` o `_headers`). Por eso no se agrega una configuración específica que podría no ser leída por el hosting elegido. Antes del primer deploy, trasladá el header recomendado de la sección [Seguridad](#seguridad) al mecanismo de headers del proveedor.
 
-## Historial del proyecto
+### Checklist de seguridad antes de producción
 
-**Vanilla → React.** La versión original (HTML/CSS/JS con ES Modules nativos, sin build step) tenía un bug de arquitectura real: los mensajes de error se escribían todos en un único `<p id="permission-status">`, dentro de la sección de permiso — que se ocultaba apenas el usuario concedía el permiso. Cualquier error posterior (la mayoría, en uso real) se escribía en un elemento invisible. La migración a React lo resolvió **estructuralmente**: cada tarjeta renderiza su propio `<ErrorMessage>` inline, así que es arquitectónicamente imposible que un error quede huérfano en una sección invisible.
-
-**JavaScript → TypeScript**, agregando en el camino: esquemas `zod` (reemplazando guards manuales), `messages.ts` (centralizando strings, base de i18n), fuentes autoalojadas con `@fontsource` (CSP más estricta), el plugin `jsx-a11y` de `oxlint` (encontró y corrigió un caso real: `<p role="status">` → `<output>`), y un módulo de telemetría conectado en los cuatro puntos donde antes había `console.error` sueltos o directamente ningún reporte.
-
-En el camino se corrigieron, además, varios problemas puntuales encontrados en revisión: `window.alert()` bloqueante y redundante (eliminado), estado obsoleto tras un reintento fallido en `useCoordinates`/`useMunicipality` (corregido), ausencia de `ErrorBoundary` y de gestión de foco (agregados), inconsistencia entre los estados `denied`/`error` en `PermissionCard` (unificados), y dos títulos de `ProvinceListCard` que habían quedado hardcodeados en `App.tsx` pese a existir `messages.ts` específicamente para evitar eso.
+- [ ] Ejecutar `pnpm install --frozen-lockfile`, `pnpm test` y `pnpm build`.
+- [ ] Servir `dist/` con HTTPS y verificar que el header HTTP real incluya `frame-ancestors 'none'`.
+- [ ] Confirmar que `Content-Security-Policy` no contiene `'unsafe-inline'` ni `'unsafe-eval'` y que `connect-src` solo permite `self` y `https://apis.datos.gob.ar`.
+- [ ] Abrir `pnpm preview` o el deploy con DevTools y recorrer idioma, permiso, coordenadas, municipio y ambos listados.
+- [ ] Revisar la consola y Network: no debe haber mensajes `Refused to...`, requests a dominios no declarados ni recursos HTTP mixtos.
+- [ ] Verificar `Permissions-Policy` con `geolocation=(self)`, `camera=()` y `microphone=()`.
 
 ---
 
 ## Deuda técnica conocida
 
-Lo que queda pendiente, a propósito documentado en vez de omitido:
+Auditoría realizada el 21/09/2026 contra el código, la configuración y la suite actual:
 
-- **i18n — Fase 2 (selector de idioma) pendiente**: existen `locales/es.ts` y `locales/en.ts`, validados estructuralmente entre sí, pero no hay todavía un selector de idioma ni una forma de que el usuario elija — `lib/messages.ts` sigue apuntando a español fijo. Ver la sección [Internacionalización (i18n)](#internacionalización-i18n) para el detalle de qué está resuelto y qué falta.
-- **`zod` valida forma, no reemplaza documentación de contrato versionada**: cubre bien las 3 respuestas conocidas y estables de la API Georef. Si la API creciera mucho, convendría generar los esquemas desde una especificación OpenAPI en vez de mantenerlos a mano.
-- **Sin telemetría real conectada a un servicio externo**: `reportError` está listo para conectarse a Sentry o similar, pero hoy solo hace `console.error` — no hay dashboards ni alertas en un entorno real.
+- **Warning de React en `useCachedResource` (prioridad media)**: `oxlint` señala una actualización síncrona de estado dentro de un efecto. El comportamiento está cubierto por tests y no rompe el build, pero conviene rediseñar la carga para evitar renders en cascada y retirar el warning.
+- **Timeout y cancelación del backoff (prioridad media)**: `fetchJson` reintenta errores de red y respuestas no-OK, pero no impone un tiempo máximo a `fetch` ni interrumpe el `setTimeout` entre reintentos cuando el `AbortSignal` ya fue cancelado. Una red bloqueada puede dejar una operación esperando indefinidamente.
+- **Telemetría de desarrollo (prioridad media)**: `reportError` solo escribe en `console.error`; no hay captura remota, agrupación ni alertas para producción.
+- **Sin regresión visual automatizada (prioridad baja)**: los 93 tests cubren comportamiento, pero no comparan capturas en desktop/móvil. Un cambio de utilidades Tailwind podría alterar el layout sin fallar la suite.
+- **Contrato externo mantenido a mano (prioridad baja)**: `zod` valida la forma de las respuestas de Georef, pero no existe una especificación versionada ni generación automática de esquemas.
+- **i18n limitado (prioridad baja)**: solo hay español e inglés, sin pluralización ni formateo localizado de números/fechas.
+- **Escala de utilidades Tailwind (prioridad baja)**: permanecen algunos valores arbitrarios como `text-[0.95rem]` y `px-[0.7rem]` para conservar la paridad visual de la migración. Podrían normalizarse en una pasada de diseño posterior.
+
+Comprobaciones de la auditoría:
+
+- `pnpm test`: 93 tests en 19 archivos, todos pasan.
+- `pnpm test:coverage`: 99,87 % de cobertura de líneas; los componentes de coordenadas y municipio quedan cubiertos al 100 %.
+- `pnpm build`: typecheck y build de producción pasan.
+- `pnpm lint`: termina correctamente con un único warning, el de `useCachedResource` indicado arriba.
+
+Estas deudas quedan documentadas a propósito en vez de ocultarse:

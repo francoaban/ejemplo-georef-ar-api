@@ -1,6 +1,8 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
-import { messages } from '../lib/messages.js'
+import { LocaleContext, type LocaleContextValue } from '../i18n/localeContext.js'
+import { es as fallbackMessages } from '../locales/es.js'
 import { reportError } from '../lib/telemetry.js'
+import { cardClasses, cardTextClasses, cardTitleClasses } from '../styles/variants.js'
 
 interface ErrorBoundaryProps {
     children: ReactNode
@@ -11,6 +13,9 @@ interface ErrorBoundaryState {
 }
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+    static contextType = LocaleContext
+    declare context: LocaleContextValue | null
+
     state: ErrorBoundaryState = { hasError: false }
 
     static getDerivedStateFromError(): ErrorBoundaryState {
@@ -23,10 +28,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
     render() {
         if (this.state.hasError) {
+            const messages = this.context?.messages ?? fallbackMessages
             return (
-                <div className="flex flex-col gap-[0.9rem] rounded-card border border-border border-l-4 border-l-warning bg-surface p-6 shadow-card" role="alert">
-                    <h2 className="text-[1.15rem]">{messages.errorBoundary.title}</h2>
-                    <p className="m-0 text-muted">{messages.errorBoundary.text}</p>
+                <div className={`${cardClasses('warning')} tablet:col-span-2`} role="alert">
+                    <h2 className={cardTitleClasses}>{messages.errorBoundary.title}</h2>
+                    <p className={cardTextClasses}>{messages.errorBoundary.text}</p>
                 </div>
             )
         }

@@ -22,8 +22,6 @@ describe('ErrorBoundary', () => {
     })
 
     it('muestra un mensaje de recuperación y reporta el error si un hijo lanza al renderizar', () => {
-        // React también loguea el error de render en consola por su cuenta;
-        // se silencia acá para no ensuciar la salida del test.
         vi.spyOn(console, 'error').mockImplementation(() => {})
 
         render(

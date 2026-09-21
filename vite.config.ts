@@ -1,10 +1,9 @@
-import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
-// https://vite.dev/config/
 export default defineConfig(({ mode }) => ({
-    plugins: [react(), tailwindcss()],
+    plugins: [tailwindcss(), react()],
     ...(mode === 'test' && {
         esbuild: { jsx: 'automatic' as const, jsxImportSource: 'react' }
     }),
@@ -16,7 +15,7 @@ export default defineConfig(({ mode }) => ({
         coverage: {
             provider: 'v8',
             include: ['src/**/*.{ts,tsx}'],
-            exclude: ['src/main.tsx', 'src/tests/**']
+            exclude: ['src/main.tsx', 'src/tests/**', '**/*.d.ts']
         }
     }
 }))

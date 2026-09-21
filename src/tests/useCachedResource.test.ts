@@ -69,6 +69,14 @@ describe('useCachedResource', () => {
         consoleErrorSpy.mockRestore()
     })
 
+    /**
+     * Este es el caso que casi se rompe durante el desarrollo: una
+     * primera versión derivaba `loading` únicamente de `data`/`error`
+     * (sin estado propio), lo que dejaba `loading` en `true` para
+     * siempre si la petición se cancelaba, porque un AbortError no
+     * setea ni `data` ni `error`. Este test existe específicamente
+     * para que esa regresión no pueda reaparecer sin que falle.
+     */
     it('ante un AbortError, no setea error y loading vuelve a false', async () => {
         const abortError = new Error('aborted')
         abortError.name = 'AbortError'
@@ -87,7 +95,7 @@ describe('useCachedResource', () => {
             const spy = vi.fn()
             signal.addEventListener('abort', spy)
             abortSpies.push(spy)
-            return new Promise(() => {}) // nunca resuelve
+            return new Promise(() => {})
         })
 
         const { rerender } = renderHook(

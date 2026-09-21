@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { API_BASE, fetchJson, getCurrentPosition } from '../lib/api.js'
 import { parseUbicacionResponse } from '../lib/schemas.js'
-import { messages } from '../lib/messages.js'
+import { useLocale } from '../i18n/localeContext.js'
 import { reportError } from '../lib/telemetry.js'
 
 export interface Municipality {
@@ -21,6 +21,7 @@ export function useMunicipality(): UseMunicipalityResult {
     const [municipality, setMunicipality] = useState<Municipality | null>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
+    const { messages } = useLocale()
 
     const fetchMunicipality = useCallback(async () => {
         setLoading(true)
@@ -54,7 +55,7 @@ export function useMunicipality(): UseMunicipalityResult {
         } finally {
             setLoading(false)
         }
-    }, [])
+    }, [messages])
 
     return { municipality, loading, error, fetchMunicipality }
 }

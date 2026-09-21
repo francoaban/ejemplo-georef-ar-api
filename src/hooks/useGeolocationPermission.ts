@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { getCurrentPosition } from '../lib/api.js'
-import { messages } from '../lib/messages.js'
+import { useLocale } from '../i18n/localeContext.js'
+import type { MessagesShape } from '../locales/es.js'
 
 export type PermissionStatus =
     'idle' | 'requesting' | 'granted' | 'denied' | 'unsupported' | 'error'
@@ -11,24 +12,39 @@ interface UseGeolocationPermissionResult {
     requestPermission: () => Promise<void>
 }
 
+function statusMessage(messages: MessagesShape, status: PermissionStatus): string {
+    switch (status) {
+        case 'unsupported':
+            return messages.permission.unsupported
+        case 'requesting':
+            return messages.permission.requesting
+        case 'granted':
+            return messages.permission.granted
+        case 'denied':
+            return messages.permission.denied
+        case 'error':
+            return messages.permission.error
+        case 'idle':
+        default:
+            return ''
+    }
+}
+
 export function useGeolocationPermission(): UseGeolocationPermissionResult {
     const [status, setStatus] = useState<PermissionStatus>('idle')
-    const [message, setMessage] = useState('')
+    const { messages } = useLocale()
 
     const requestPermission = useCallback(async () => {
         if (!navigator.geolocation) {
             setStatus('unsupported')
-            setMessage(messages.permission.unsupported)
             return
         }
 
         setStatus('requesting')
-        setMessage(messages.permission.requesting)
 
         try {
             await getCurrentPosition()
             setStatus('granted')
-            setMessage(messages.permission.granted)
         } catch (error) {
             const isPermissionDenied =
                 typeof error === 'object' &&
@@ -38,15 +54,9 @@ export function useGeolocationPermission(): UseGeolocationPermissionResult {
                 (error as GeolocationPositionError).code ===
                     (error as GeolocationPositionError).PERMISSION_DENIED
 
-            if (isPermissionDenied) {
-                setStatus('denied')
-                setMessage(messages.permission.denied)
-            } else {
-                setStatus('error')
-                setMessage(messages.permission.error)
-            }
+            setStatus(isPermissionDenied ? 'denied' : 'error')
         }
     }, [])
 
-    return { status, message, requestPermission }
+    return { status, message: statusMessage(messages, status), requestPermission }
 }

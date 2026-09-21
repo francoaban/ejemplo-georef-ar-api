@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { act, renderHook, waitFor } from '@testing-library/react'
+import { act, renderHook, waitFor } from './test-utils.js'
 
 vi.mock('../lib/api.js', () => ({
     getCurrentPosition: vi.fn()

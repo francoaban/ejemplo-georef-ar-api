@@ -1,3 +1,8 @@
 export function Spinner() {
-    return <span className="size-4 shrink-0 animate-spin rounded-full border-2 border-border border-t-accent motion-reduce:animate-[spin_1.5s_linear_infinite]" aria-hidden="true" />
+    return (
+        <span
+            className="h-4 w-4 shrink-0 animate-spin-fast rounded-full border-2 border-border border-t-accent motion-reduce:animate-none"
+            aria-hidden="true"
+        />
+    )
 }

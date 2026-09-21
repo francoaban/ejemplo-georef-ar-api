@@ -3,26 +3,44 @@
 @theme {
     --color-bg: #f6f7f4;
     --color-surface: #ffffff;
-    --color-ink: #1c2321;
-    --color-muted: #5c6b66;
+    --color-text: #1c2321;
+    --color-text-muted: #5c6b66;
     --color-border: #dce1da;
     --color-accent: #0f6e5a;
     --color-accent-dark: #0b5747;
     --color-warning: #b3410e;
     --color-warning-bg: #fbe9e2;
+
     --font-heading: 'Space Grotesk', 'Segoe UI', sans-serif;
     --font-body: 'Inter', 'Segoe UI', sans-serif;
+
     --radius-card: 10px;
     --shadow-card: 0 1px 2px rgba(28, 35, 33, 0.06), 0 4px 12px rgba(28, 35, 33, 0.05);
+
+    --breakpoint-tablet: 700px;
+    --breakpoint-desktop: 1080px;
+
+    --animate-spin-fast: spin-fast 0.7s linear infinite;
+}
+
+@keyframes spin-fast {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 @layer base {
     body {
-        @apply m-0 bg-bg font-body leading-normal text-ink;
+        margin: 0;
+        font-family: var(--font-body);
+        background-color: var(--color-bg);
+        color: var(--color-text);
+        line-height: 1.5;
     }
 
     h1,
     h2 {
-        @apply m-0 font-heading;
+        font-family: var(--font-heading);
+        margin: 0;
     }
 }
